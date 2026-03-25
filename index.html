@@ -6,7 +6,6 @@
     <title>Talk! Stopwatch Pro</title>
     <style>
         :root {
-            /* Material 3 Dark Theme */
             --md-sys-color-background: #1c1b1f;
             --md-sys-color-on-background: #e6e1e5;
             --md-sys-color-surface: #2b2930;
@@ -40,7 +39,6 @@
             overflow-x: hidden;
         }
 
-        /* Displays */
         .display-container {
             padding: 24px 16px;
             display: flex;
@@ -52,14 +50,9 @@
             border-bottom-right-radius: var(--md-sys-shape-corner-large);
         }
 
-        .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+        .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; display: flex; align-items: center; gap: 8px; }
         
-        .time-display {
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            font-weight: 300;
-        }
-
+        .time-display { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 300; }
         .main-time { font-size: 3.5rem; color: #00e5ff; letter-spacing: -2px; }
         .main-time .ms { font-size: 2rem; }
         
@@ -75,7 +68,6 @@
         .sub-time { font-size: 1.5rem; color: var(--md-sys-color-primary); }
         .overtime { color: var(--md-sys-color-error); }
 
-        /* Configuration Panel */
         .config-panel {
             flex: 1;
             overflow-y: auto;
@@ -85,19 +77,19 @@
             gap: 20px;
         }
 
-        .config-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .config-group { display: flex; flex-direction: column; gap: 8px; }
+        
+        .input-row { 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            justify-content: space-between; 
+            background: var(--md-sys-color-surface);
+            padding: 8px 12px;
+            border-radius: var(--md-sys-shape-corner-small);
         }
 
-        .input-row {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        input[type="number"], input[type="text"] {
+        input[type="number"], input[type="text"], select {
             background: var(--md-sys-color-surface-variant);
             color: var(--md-sys-color-on-surface);
             border: 1px solid transparent;
@@ -107,75 +99,142 @@
             font-size: 1rem;
             width: 100%;
         }
+
+        select { font-family: var(--font-sans); }
         
-        input[type="number"] { width: 80px; text-align: center; }
+        input[type="number"] { width: 90px; text-align: center; }
+        input.time-input { width: 140px; text-align: center; font-weight: bold; letter-spacing: 1px;}
 
-        /* Adjuster Buttons */
-        .adjust-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-            gap: 8px;
-            margin-bottom: 8px;
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--md-sys-color-surface-variant); transition: .2s;
+            border-radius: 24px;
         }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: var(--md-sys-color-on-surface); transition: .2s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--md-sys-color-primary); }
+        input:checked + .slider:before { transform: translateX(20px); background-color: var(--md-sys-color-on-primary); }
 
+        .adjust-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); gap: 8px; margin-bottom: 8px; }
         .chip-btn {
             background: var(--md-sys-color-secondary-container);
             color: var(--md-sys-color-on-secondary-container);
             border: none;
             padding: 8px 0;
             border-radius: var(--md-sys-shape-corner-small);
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.85rem;
+            font-weight: 600; cursor: pointer; font-size: 0.85rem;
         }
 
-        /* Quick Starts */
-        .quick-start-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
+        .quick-start-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .quick-btn {
             background: var(--md-sys-color-tertiary-container);
             color: var(--md-sys-color-on-surface);
             border: none;
             padding: 12px 0;
             border-radius: var(--md-sys-shape-corner-medium);
-            font-weight: 500;
-            cursor: pointer;
+            font-weight: 500; cursor: pointer;
         }
 
-        /* Primary Controls */
-        .controls {
-            padding: 16px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            background: var(--md-sys-color-surface);
+        details.advanced-panel {
+            background: var(--md-sys-color-surface-variant);
+            border-radius: var(--md-sys-shape-corner-medium);
+            padding: 12px;
         }
-
-        .btn {
-            padding: 20px;
-            border: none;
-            border-radius: var(--md-sys-shape-corner-large);
-            font-size: 1.1rem;
+        details.advanced-panel summary {
             font-weight: 600;
             cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        details.advanced-panel summary::-webkit-details-marker { display: none; }
+        details.advanced-panel summary::after {
+            content: "▼";
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+        details.advanced-panel[open] summary::after { transform: rotate(180deg); }
+        .advanced-content {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
+        .btn-calibrate {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border: none;
+            padding: 10px 16px;
+            border-radius: var(--md-sys-shape-corner-small);
+            font-weight: 600; cursor: pointer; font-size: 0.85rem; width: 100%; margin-top: 8px;
+        }
+
+        .controls { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: var(--md-sys-color-surface); }
+        .btn { padding: 20px; border: none; border-radius: var(--md-sys-shape-corner-large); font-size: 1.1rem; font-weight: 600; cursor: pointer; }
         .btn-reset { background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); }
         .btn-start { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-background); }
+        
+        #calibrationStatus { font-size: 0.75rem; color: #00e5ff; text-align: right; font-family: var(--font-mono); display: block; margin-top: 4px; }
+
+        .info-btn {
+            background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface);
+            border: 1px solid var(--md-sys-color-on-surface);
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            font-size: 12px; font-weight: bold; font-family: var(--font-mono);
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; opacity: 0.8;
+        }
+        .info-span { display: flex; align-items: center; gap: 8px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 24px;
+        }
+        .modal-content {
+            background: var(--md-sys-color-surface);
+            padding: 24px; border-radius: var(--md-sys-shape-corner-large);
+            max-width: 400px; width: 100%;
+        }
+        .modal-title { font-size: 1.2rem; font-weight: 600; color: var(--md-sys-color-primary); margin-bottom: 12px; }
+        .modal-body { font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px; color: var(--md-sys-color-on-surface); }
+        .modal-close {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-background);
+            border: none; padding: 12px; width: 100%;
+            border-radius: var(--md-sys-shape-corner-small);
+            font-weight: 600; cursor: pointer;
+        }
+        
+        .custom-append-row { display: none; gap: 8px; margin-top: 8px; }
+        .custom-append-row input { text-align: center; font-size: 0.85rem; padding: 8px; }
     </style>
 </head>
 <body>
+
+    <div class="modal-overlay" id="infoModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">Title</div>
+            <div class="modal-body" id="modalBody">Description</div>
+            <button class="modal-close" onclick="document.getElementById('infoModal').style.display='none'">CLOSE</button>
+        </div>
+    </div>
 
     <div class="display-container">
         <div class="label">Elapsed Time</div>
         <div class="time-display main-time" id="dispElapsed">
             00:00:00<span class="ms">.00</span>
         </div>
-        
         <div class="sub-displays">
             <div>
                 <div class="label">Remaining (HH:MM:SS)</div>
@@ -190,46 +249,101 @@
 
     <div class="config-panel">
         <div class="config-group">
-            <div class="label">Target End Time (Minutes)</div>
+            <div class="label">Target End Time (HH:MM:SS) 
+                <button class="info-btn" onclick="app.showInfo('Target End Time', 'The absolute target time for the stopwatch. When reached, the timer drops into overtime, reversing the remaining displays to positive numbers and repeating the Overtime Phrase.')">i</button>
+            </div>
             <div class="adjust-grid">
-                <button class="chip-btn" onclick="app.adjustTarget(-10)">-10m</button>
-                <button class="chip-btn" onclick="app.adjustTarget(-5)">-5m</button>
-                <button class="chip-btn" onclick="app.adjustTarget(-1)">-1m</button>
-                <input type="number" id="inTargetMins" value="5" min="0" step="0.5">
-                <button class="chip-btn" onclick="app.adjustTarget(1)">+1m</button>
-                <button class="chip-btn" onclick="app.adjustTarget(5)">+5m</button>
-                <button class="chip-btn" onclick="app.adjustTarget(10)">+10m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(-600)">-10m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(-300)">-5m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(-60)">-1m</button>
+                <input type="text" class="time-input" id="inTargetTime" value="00:05:00" onchange="app.saveState(); app.validateTargetInput()">
+                <button class="chip-btn" onclick="app.adjustTarget(60)">+1m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(300)">+5m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(600)">+10m</button>
             </div>
         </div>
 
         <div class="config-group">
-            <div class="label">Quick Start (Minutes)</div>
+            <div class="label">Quick Start Options</div>
             <div class="quick-start-grid">
-                <button class="quick-btn" onclick="app.quickStart(1)">1m</button>
-                <button class="quick-btn" onclick="app.quickStart(2)">2m</button>
-                <button class="quick-btn" onclick="app.quickStart(3)">3m</button>
-                <button class="quick-btn" onclick="app.quickStart(5)">5m</button>
-                <button class="quick-btn" onclick="app.quickStart(10)">10m</button>
-                <button class="quick-btn" onclick="app.quickStart(15)">15m</button>
-                <button class="quick-btn" onclick="app.quickStart(20)">20m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:01:00')">1m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:02:00')">2m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:03:00')">3m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:05:00')">5m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:10:00')">10m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:15:00')">15m</button>
+                <button class="quick-btn" onclick="app.quickStart('00:20:00')">20m</button>
             </div>
         </div>
 
         <div class="config-group">
             <div class="label">Voice Logic Parameters</div>
             <div class="input-row">
-                <input type="number" id="inInterval" value="10" min="1"> 
-                <span>Interval (s)</span>
+                <span class="info-span">Interval (s) 
+                    <button class="info-btn" onclick="app.showInfo('Voice Interval', 'The frequency at which the TTS engine reads the accumulated time. Modulo arithmetic applies, e.g., an interval of 10 triggers at 1m 10s, 1m 20s.')">i</button>
+                </span>
+                <input type="number" id="inInterval" value="10" min="1" onchange="app.saveState()"> 
             </div>
+            
             <div class="input-row">
-                <input type="number" id="inCountdown" value="5" min="1"> 
-                <span>Countdown triggers at (s) remaining</span>
+                <span class="info-span">Countdown trigger (s)
+                    <button class="info-btn" onclick="app.showInfo('Countdown Trigger', 'When the remaining time is less than or equal to this threshold, the interval formatting halts and the engine announces raw integers for every remaining second until 0.')">i</button>
+                </span>
+                <input type="number" id="inCountdown" value="5" min="1" onchange="app.saveState()"> 
             </div>
-            <div class="input-row">
-                <input type="text" id="inOvertimeText" value="Time exceeded"> 
-                <span>Overtime Phrase</span>
+            
+            <div class="input-row" style="flex-direction: column; align-items: stretch;">
+                <span class="info-span" style="margin-bottom:8px;">Overtime Phrase
+                    <button class="info-btn" onclick="app.showInfo('Overtime Phrase', 'The lexical payload sent to the TTS engine repeatedly every 5 seconds once the elapsed time exceeds the Target End Time.')">i</button>
+                </span>
+                <input type="text" id="inOvertimeText" value="Time exceeded" onchange="app.saveState()"> 
             </div>
         </div>
+
+        <details class="advanced-panel">
+            <summary>Advanced Formatting & Hardware</summary>
+            <div class="advanced-content">
+                
+                <div class="input-row" style="flex-direction: column; align-items: stretch;">
+                    <span class="info-span" style="margin-bottom:8px;">Temporal Appendments
+                        <button class="info-btn" onclick="app.showInfo('Temporal Appendments', 'Modifies the syntactic structure of the interval announcement. Disabling this removes all units (e.g., outputs &quot;1 20&quot; instead of &quot;1 minute 20 seconds&quot;). Plurals are automatically stripped for values of 1 when using standard words.')">i</button>
+                    </span>
+                    <select id="selAppendMode" onchange="app.handleAppendModeChange()">
+                        <option value="preset_default">hours minutes seconds</option>
+                        <option value="preset_hms">h m s</option>
+                        <option value="preset_mins">hours mins secs</option>
+                        <option value="none">Disable Appendments (Raw Numbers)</option>
+                        <option value="custom">Custom Phrases...</option>
+                    </select>
+                    <div class="custom-append-row" id="customAppendRow">
+                        <input type="text" id="inCustomH" placeholder="Hr" onchange="app.saveState()">
+                        <input type="text" id="inCustomM" placeholder="Min" onchange="app.saveState()">
+                        <input type="text" id="inCustomS" placeholder="Sec" onchange="app.saveState()">
+                    </div>
+                </div>
+
+                <div class="input-row" style="flex-direction: column; align-items: stretch; margin-top: 12px;">
+                    <div style="display:flex; justify-content: space-between; align-items: center;">
+                        <span class="info-span">Enable Neural LUT
+                            <button class="info-btn" onclick="app.showInfo('Neural LUT Calibration', 'Uses Piecewise Linear Interpolation across 5 temporal profile points to pre-calculate TTS processing latency. Highly recommended for local models like Sherpa Onyx where G2P processing scales non-linearly with sequence length.')">i</button>
+                        </span>
+                        <label class="switch">
+                            <input type="checkbox" id="chkDynamic" checked onchange="app.saveState()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <button class="btn-calibrate" id="btnCalibrate">RUN MULTI-POINT CALIBRATION</button>
+                    <span id="calibrationStatus">LUT: Uncalibrated (Defaulting to Static)</span>
+                </div>
+
+                <div class="input-row">
+                    <span class="info-span">Static Offset (ms)
+                        <button class="info-btn" onclick="app.showInfo('Static Offset Fallback', 'The hardcoded pre-dispatch interval in milliseconds. Only used if the Neural LUT is disabled or uncalibrated. Compensates for baseline Binder IPC and AudioFlinger overhead.')">i</button>
+                    </span>
+                    <input type="number" id="inTtsOffset" value="250" onchange="app.saveState()"> 
+                </div>
+            </div>
+        </details>
     </div>
 
     <div class="controls">
@@ -240,32 +354,136 @@
     <script>
         class StopwatchEngine {
             constructor() {
-                // DOM Binding
                 this.dElap = document.getElementById('dispElapsed');
                 this.dRemHH = document.getElementById('dispRemHH');
                 this.dRemSS = document.getElementById('dispRemSS');
                 this.btnStart = document.getElementById('btnStart');
-                this.inTargetMins = document.getElementById('inTargetMins');
+                this.btnCalibrate = document.getElementById('btnCalibrate');
+                this.calibrationStatus = document.getElementById('calibrationStatus');
+                
+                this.inTargetTime = document.getElementById('inTargetTime');
+                this.inTtsOffset = document.getElementById('inTtsOffset');
                 this.inInterval = document.getElementById('inInterval');
                 this.inCountdown = document.getElementById('inCountdown');
                 this.inOvertimeText = document.getElementById('inOvertimeText');
+                this.chkDynamic = document.getElementById('chkDynamic');
+                
+                this.selAppendMode = document.getElementById('selAppendMode');
+                this.customAppendRow = document.getElementById('customAppendRow');
+                this.inCustomH = document.getElementById('inCustomH');
+                this.inCustomM = document.getElementById('inCustomM');
+                this.inCustomS = document.getElementById('inCustomS');
 
-                // State
+                this.modalOverlay = document.getElementById('infoModal');
+                this.modalTitle = document.getElementById('modalTitle');
+                this.modalBody = document.getElementById('modalBody');
+
                 this.isRunning = false;
                 this.startTime = 0;
                 this.accumulatedTime = 0;
+                this.wakeLock = null;
                 
-                // Audio Scheduler State
-                this.nextEvent = null; // { timeMs, text }
-                this.cachedUtterance = null;
-                this.overtimeRepetitionMs = 5000; // Repeat overtime phrase every 5s
+                this.nextEvent = null; 
+                this.hasDispatchedCurrentEvent = false;
+                this.overtimeRepetitionMs = 5000;
+                
+                this.latencyLUT = []; 
+                this.cachedVoices = [];
 
+                this.loadState();
                 this.initWorker();
+                this.handleAppendModeChange();
                 
                 document.getElementById('btnReset').addEventListener('click', () => this.reset());
                 this.btnStart.addEventListener('click', () => this.toggle());
+                this.btnCalibrate.addEventListener('click', () => this.runCalibrationSequence());
+                
+                document.addEventListener('visibilitychange', () => {
+                    if (this.isRunning && document.visibilityState === 'visible') this.requestWakeLock();
+                });
                 
                 this.updateDisplays(0);
+                this.loadVoices();
+                this.updateCalibrationUI();
+            }
+
+            // --- OS Hooks ---
+            async requestWakeLock() {
+                if ('wakeLock' in navigator) {
+                    try { this.wakeLock = await navigator.wakeLock.request('screen'); } 
+                    catch (err) { console.warn('Wake Lock error:', err); }
+                }
+            }
+
+            releaseWakeLock() {
+                if (this.wakeLock !== null) {
+                    this.wakeLock.release();
+                    this.wakeLock = null;
+                }
+            }
+
+            // --- UI & State Management ---
+            showInfo(title, description) {
+                this.modalTitle.textContent = title;
+                this.modalBody.textContent = description;
+                this.modalOverlay.style.display = 'flex';
+            }
+
+            handleAppendModeChange() {
+                if (this.selAppendMode.value === 'custom') {
+                    this.customAppendRow.style.display = 'flex';
+                } else {
+                    this.customAppendRow.style.display = 'none';
+                }
+                this.saveState();
+            }
+
+            saveState() {
+                const state = {
+                    targetTime: this.inTargetTime.value,
+                    ttsOffset: this.inTtsOffset.value,
+                    interval: this.inInterval.value,
+                    countdown: this.inCountdown.value,
+                    overtimeText: this.inOvertimeText.value,
+                    dynamicEnabled: this.chkDynamic.checked,
+                    latencyLUT: this.latencyLUT,
+                    appendMode: this.selAppendMode.value,
+                    customH: this.inCustomH.value,
+                    customM: this.inCustomM.value,
+                    customS: this.inCustomS.value
+                };
+                localStorage.setItem('stopwatchProState', JSON.stringify(state));
+                this.updateCalibrationUI();
+            }
+
+            loadState() {
+                const stored = localStorage.getItem('stopwatchProState');
+                if (stored) {
+                    try {
+                        const state = JSON.parse(stored);
+                        this.inTargetTime.value = state.targetTime || '00:05:00';
+                        this.inTtsOffset.value = state.ttsOffset || '250';
+                        this.inInterval.value = state.interval || '10';
+                        this.inCountdown.value = state.countdown || '5';
+                        this.inOvertimeText.value = state.overtimeText || 'Time exceeded';
+                        this.chkDynamic.checked = state.dynamicEnabled !== false;
+                        this.latencyLUT = state.latencyLUT || [];
+                        this.selAppendMode.value = state.appendMode || 'preset_default';
+                        this.inCustomH.value = state.customH || 'h';
+                        this.inCustomM.value = state.customM || 'm';
+                        this.inCustomS.value = state.customS || 's';
+                    } catch (e) {
+                        console.error('State hydration failed:', e);
+                    }
+                }
+            }
+
+            updateCalibrationUI() {
+                if (this.latencyLUT.length > 0) {
+                    this.calibrationStatus.textContent = `LUT Active (${this.latencyLUT.length} boundaries mapped to current string format)`;
+                } else {
+                    this.calibrationStatus.textContent = "LUT: Uncalibrated (Defaulting to Static)";
+                }
             }
 
             initWorker() {
@@ -273,7 +491,7 @@
                     let timer;
                     self.onmessage = function(e) {
                         if (e.data === 'start') {
-                            timer = setInterval(() => self.postMessage('tick'), 50);
+                            timer = setInterval(() => self.postMessage('tick'), 25);
                         } else if (e.data === 'stop') {
                             clearInterval(timer);
                         }
@@ -284,23 +502,158 @@
                 this.worker.onmessage = () => this.tick();
             }
 
-            // --- UI Bindings ---
-            
-            adjustTarget(deltaMins) {
-                let current = parseFloat(this.inTargetMins.value) || 0;
-                let newVal = Math.max(0, current + deltaMins);
-                this.inTargetMins.value = newVal;
-                if(!this.isRunning) this.updateDisplays(this.accumulatedTime);
+            loadVoices() {
+                if ('speechSynthesis' in window) {
+                    const updateVoices = () => { this.cachedVoices = window.speechSynthesis.getVoices(); };
+                    window.speechSynthesis.onvoiceschanged = updateVoices;
+                    updateVoices();
+                }
             }
 
-            quickStart(mins) {
-                this.inTargetMins.value = mins;
+            parseHHMMSS(str) {
+                const parts = str.split(':').map(Number);
+                if (parts.length !== 3 || parts.some(isNaN)) return 0;
+                return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
+            }
+
+            formatHHMMSS(ms) {
+                const s = Math.max(0, Math.floor(ms / 1000));
+                const pad = n => n.toString().padStart(2, '0');
+                return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+            }
+
+            validateTargetInput() {
+                const ms = this.parseHHMMSS(this.inTargetTime.value);
+                this.inTargetTime.value = this.formatHHMMSS(ms);
+                if (!this.isRunning) this.updateDisplays(this.accumulatedTime);
+            }
+
+            adjustTarget(deltaSecs) {
+                let currentMs = this.parseHHMMSS(this.inTargetTime.value);
+                let newMs = Math.max(0, currentMs + (deltaSecs * 1000));
+                this.inTargetTime.value = this.formatHHMMSS(newMs);
+                this.saveState();
+                if (!this.isRunning) this.updateDisplays(this.accumulatedTime);
+            }
+
+            quickStart(hhmmss) {
+                this.inTargetTime.value = hhmmss;
+                this.saveState();
                 this.reset();
                 this.start();
             }
 
-            // --- Core Engine ---
+            // --- Temporal Formatting Engine ---
+            buildTemporalString(totalSeconds) {
+                if (totalSeconds === 0) return "0";
+                
+                const h = Math.floor(totalSeconds / 3600);
+                const m = Math.floor((totalSeconds % 3600) / 60);
+                const s = totalSeconds % 60;
+                
+                const mode = this.selAppendMode.value;
+                if (mode === 'none') {
+                    let parts = [];
+                    if (h > 0) parts.push(h);
+                    if (m > 0) parts.push(m);
+                    if (s > 0) parts.push(s);
+                    return parts.join(" ");
+                }
+                
+                let lblH, lblM, lblS;
+                if (mode === 'preset_hms') { lblH = "h"; lblM = "m"; lblS = "s"; }
+                else if (mode === 'preset_mins') { lblH = "hours"; lblM = "mins"; lblS = "secs"; }
+                else if (mode === 'custom') { 
+                    lblH = this.inCustomH.value; 
+                    lblM = this.inCustomM.value; 
+                    lblS = this.inCustomS.value; 
+                }
+                else { lblH = "hours"; lblM = "minutes"; lblS = "seconds"; } // Default
 
+                const formatLabel = (val, label) => {
+                    // Primitive morphological stripping for English singulars
+                    if (val === 1 && label.length > 2 && label.endsWith('s')) return label.slice(0, -1);
+                    return label;
+                };
+
+                let parts = [];
+                if (h > 0) parts.push(`${h} ${formatLabel(h, lblH)}`.trim());
+                if (m > 0) parts.push(`${m} ${formatLabel(m, lblM)}`.trim());
+                if (s > 0) parts.push(`${s} ${formatLabel(s, lblS)}`.trim());
+                
+                return parts.join(" ");
+            }
+
+            // --- Neural Calibration Engine ---
+            measureUtteranceLatency(text) {
+                return new Promise(resolve => {
+                    let u = new SpeechSynthesisUtterance(text);
+                    u.volume = 0; 
+                    let t0 = performance.now();
+                    u.onstart = () => resolve(performance.now() - t0);
+                    u.onerror = () => resolve(null); 
+                    setTimeout(() => resolve(null), 3000); 
+                    window.speechSynthesis.speak(u);
+                });
+            }
+
+            async runCalibrationSequence() {
+                if (!('speechSynthesis' in window)) return;
+                
+                this.btnCalibrate.disabled = true;
+                this.latencyLUT = []; 
+                
+                // Abstract mathematical domains for stratified testing
+                const testValues = [1, 10, 60, 120, 3600];
+
+                this.calibrationStatus.textContent = "Waking Daemon...";
+                await this.measureUtteranceLatency('');
+                
+                for (let i = 0; i < testValues.length; i++) {
+                    const val = testValues[i];
+                    // Map the integer to the user's specific string configuration prior to profiling
+                    const formattedString = this.buildTemporalString(val);
+                    
+                    this.calibrationStatus.textContent = `Profiling Point ${i+1}/${testValues.length} ("${formattedString}")...`;
+                    const latency = await this.measureUtteranceLatency(formattedString);
+                    
+                    if (latency !== null) {
+                        this.latencyLUT.push({ val: val, ms: Math.round(latency + 40) });
+                    }
+                }
+
+                this.latencyLUT.sort((a, b) => a.val - b.val);
+                this.saveState();
+                this.btnCalibrate.disabled = false;
+            }
+
+            getDynamicOffset(numericValue) {
+                if (!this.latencyLUT || this.latencyLUT.length === 0) return parseInt(this.inTtsOffset.value) || 0;
+                if (this.latencyLUT.length === 1) return this.latencyLUT[0].ms;
+                if (numericValue <= this.latencyLUT[0].val) return this.latencyLUT[0].ms;
+                
+                const lastIdx = this.latencyLUT.length - 1;
+                if (numericValue >= this.latencyLUT[lastIdx].val) {
+                    const p1 = this.latencyLUT[lastIdx - 1];
+                    const p2 = this.latencyLUT[lastIdx];
+                    const slope = (p2.ms - p1.ms) / (p2.val - p1.val);
+                    return p2.ms + slope * (numericValue - p2.val);
+                }
+
+                for (let i = 0; i < lastIdx; i++) {
+                    const p1 = this.latencyLUT[i];
+                    const p2 = this.latencyLUT[i+1];
+                    
+                    if (numericValue > p1.val && numericValue <= p2.val) {
+                        const slope = (p2.ms - p1.ms) / (p2.val - p1.val);
+                        return p1.ms + slope * (numericValue - p1.val);
+                    }
+                }
+                
+                return parseInt(this.inTtsOffset.value) || 0;
+            }
+
+            // --- Execution Context ---
             toggle() { this.isRunning ? this.stop() : this.start(); }
 
             start() {
@@ -308,12 +661,14 @@
                 this.startTime = Date.now() - this.accumulatedTime;
                 this.btnStart.textContent = 'STOP';
                 
-                // Initialize TTS context on user gesture
+                this.requestWakeLock();
+                
                 if ('speechSynthesis' in window) {
                     let u = new SpeechSynthesisUtterance('');
                     u.volume = 0; window.speechSynthesis.speak(u);
                 }
                 
+                this.hasDispatchedCurrentEvent = false;
                 this.calculateNextSpeechEvent(this.accumulatedTime);
                 this.worker.postMessage('start');
             }
@@ -322,15 +677,18 @@
                 this.isRunning = false;
                 this.accumulatedTime = Date.now() - this.startTime;
                 this.btnStart.textContent = 'START';
+                
+                this.releaseWakeLock();
                 this.worker.postMessage('stop');
+                
                 if(window.speechSynthesis) window.speechSynthesis.cancel();
             }
 
             reset() {
                 this.stop();
                 this.accumulatedTime = 0;
-                this.cachedUtterance = null;
                 this.nextEvent = null;
+                this.hasDispatchedCurrentEvent = false;
                 this.updateDisplays(0);
             }
 
@@ -340,91 +698,74 @@
                 this.handleVoiceLogic(elapsed);
             }
 
-            // --- Deterministic Audio Scheduler ---
-
             calculateNextSpeechEvent(elapsedMs) {
-                const targetMs = (parseFloat(this.inTargetMins.value) || 0) * 60000;
+                const targetMs = this.parseHHMMSS(this.inTargetTime.value);
                 const intervalMs = (parseFloat(this.inInterval.value) || 10) * 1000;
                 const countdownZoneMs = (parseFloat(this.inCountdown.value) || 0) * 1000;
                 
-                // Phase 3: Overtime
                 if (elapsedMs >= targetMs) {
                     const elapsedOvertime = elapsedMs - targetMs;
                     const nextOvertimeTick = Math.ceil((elapsedOvertime + 1) / this.overtimeRepetitionMs) * this.overtimeRepetitionMs;
-                    this.nextEvent = {
-                        time: targetMs + nextOvertimeTick,
-                        text: this.inOvertimeText.value || "Time exceeded"
-                    };
+                    this.nextEvent = { time: targetMs + nextOvertimeTick, text: this.inOvertimeText.value, isOvertime: true };
                     return;
                 }
 
-                // Phase 2: Final Countdown Zone
                 if (elapsedMs >= targetMs - countdownZoneMs) {
                     const remainingMs = targetMs - elapsedMs;
                     const nextSecondBoundaryMs = targetMs - (Math.floor((remainingMs - 1) / 1000) * 1000);
                     const secondsLeft = Math.round((targetMs - nextSecondBoundaryMs) / 1000);
-                    
-                    this.nextEvent = {
-                        time: nextSecondBoundaryMs,
-                        text: secondsLeft.toString()
-                    };
+                    // Retain strictly raw numbers for final seconds to prevent speech collision overlaps
+                    this.nextEvent = { time: nextSecondBoundaryMs, text: secondsLeft.toString(), val: secondsLeft };
                     return;
                 }
 
-                // Phase 1: Standard Interval
                 const nextIntervalBoundary = Math.ceil((elapsedMs + 1) / intervalMs) * intervalMs;
-                
-                // Check if the next interval breaches the countdown zone
                 if (nextIntervalBoundary >= targetMs - countdownZoneMs) {
-                    // Recalculate to drop into Phase 2 directly
                     this.calculateNextSpeechEvent(targetMs - countdownZoneMs);
                 } else {
-                    this.nextEvent = {
-                        time: nextIntervalBoundary,
-                        text: `${Math.round(nextIntervalBoundary / 1000)} seconds`
-                    };
+                    const totalSecondsPassed = Math.round(nextIntervalBoundary / 1000);
+                    const synthesizedText = this.buildTemporalString(totalSecondsPassed);
+                    this.nextEvent = { time: nextIntervalBoundary, text: synthesizedText, val: totalSecondsPassed };
                 }
             }
 
             handleVoiceLogic(elapsed) {
                 if (!this.nextEvent || !('speechSynthesis' in window)) return;
 
-                // 1. Predictive Caching (Pre-instantiate 2000ms before boundary)
-                if (elapsed >= (this.nextEvent.time - 2000) && !this.cachedUtterance) {
-                    this.cachedUtterance = new SpeechSynthesisUtterance(this.nextEvent.text);
-                    this.cachedUtterance.rate = 1.15; // Brisk pacing for stopwatch
-                    
-                    const voices = window.speechSynthesis.getVoices();
-                    if (voices.length > 0) {
-                        this.cachedUtterance.voice = voices.find(v => v.lang.includes('en')) || voices[0];
-                    }
+                let offsetMs = 0;
+                
+                if (this.nextEvent.isOvertime) {
+                    offsetMs = parseInt(this.inTtsOffset.value) || 0;
+                } else if (this.chkDynamic.checked && this.latencyLUT.length > 0) {
+                    offsetMs = this.getDynamicOffset(this.nextEvent.val);
+                } else {
+                    offsetMs = parseInt(this.inTtsOffset.value) || 0;
                 }
 
-                // 2. Exact Boundary Dispatch
-                if (elapsed >= this.nextEvent.time) {
-                    if (this.cachedUtterance) {
-                        window.speechSynthesis.speak(this.cachedUtterance);
-                    } else {
-                        // Rapid state change fallback
-                        window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.nextEvent.text));
-                    }
+                const dispatchTime = this.nextEvent.time - offsetMs;
+
+                if (elapsed >= dispatchTime && !this.hasDispatchedCurrentEvent) {
+                    let utterance = new SpeechSynthesisUtterance(this.nextEvent.text);
+                    utterance.rate = 1.15;
+                    if (this.cachedVoices.length > 0) utterance.voice = this.cachedVoices.find(v => v.lang.includes('en')) || this.cachedVoices[0];
                     
-                    this.cachedUtterance = null;
-                    // Compute next logical node based on current time
+                    window.speechSynthesis.speak(utterance);
+                    this.hasDispatchedCurrentEvent = true;
+                }
+
+                if (elapsed >= this.nextEvent.time) {
+                    this.hasDispatchedCurrentEvent = false;
                     this.calculateNextSpeechEvent(elapsed); 
                 }
             }
 
-            // --- Display Formatting ---
-
             updateDisplays(ms) {
                 requestAnimationFrame(() => {
-                    const targetMs = (parseFloat(this.inTargetMins.value) || 0) * 60000;
+                    const targetMs = this.parseHHMMSS(this.inTargetTime.value);
                     const remMs = targetMs - ms;
                     const isOver = remMs < 0;
                     const absRemMs = Math.abs(remMs);
 
-                    // Helpers
                     const pad2 = n => n.toString().padStart(2, '0');
                     const formatHH = timeMs => {
                         const s = Math.floor(timeMs / 1000);
@@ -432,18 +773,12 @@
                     };
                     const formatSS = timeMs => (timeMs / 1000).toFixed(2);
 
-                    // 1. Main Elapsed
-                    const elapS = Math.floor(ms / 1000);
                     this.dElap.innerHTML = `${formatHH(ms)}<span class="ms">.${pad2(Math.floor((ms % 1000)/10))}</span>`;
 
-                    // 2. Remaining HH:MM:SS.SS
                     const prefix = isOver ? "+" : "-";
                     this.dRemHH.textContent = `${prefix}${formatHH(absRemMs)}.${pad2(Math.floor((absRemMs % 1000)/10))}`;
-                    
-                    // 3. Remaining Sec.SS
                     this.dRemSS.textContent = `${prefix}${formatSS(absRemMs)}`;
 
-                    // Styling for overtime
                     if (isOver) {
                         this.dRemHH.classList.add('overtime');
                         this.dRemSS.classList.add('overtime');
@@ -455,8 +790,6 @@
             }
         }
 
-        // Init
-        if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
         const app = new StopwatchEngine();
     </script>
 </body>
