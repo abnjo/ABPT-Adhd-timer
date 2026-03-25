@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Talk! Stopwatch</title>
+    <style>
+        :root {
+            /* Material 3 Dark Theme Baseline */
+            --md-sys-color-background: #1c1b1f;
+            --md-sys-color-on-background: #e6e1e5;
+            --md-sys-color-surface: #2b2930;
+            --md-sys-color-surface-variant: #49454f;
+            --md-sys-color-on-surface: #e6e1e5;
+            --md-sys-color-primary: #d0bcff;
+            --md-sys-color-on-primary: #381e72;
+            --md-sys-color-primary-container: #4f378b;
+            --md-sys-color-secondary-container: #4a4458;
+            --md-sys-color-on-secondary-container: #e8def8;
+            --md-sys-color-error: #f2b8b5;
+            
+            --md-sys-shape-corner-large: 28px;
+            --md-sys-shape-corner-medium: 16px;
+            --md-sys-shape-corner-full: 9999px;
+
+            --font-mono: 'Roboto Mono', monospace, ui-monospace;
+            --font-sans: 'Roboto', system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
+            font-family: var(--font-sans);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Top App Bar */
+        header {
+            padding: 16px;
+            font-size: 20px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Display Area */
+        .display-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 40px;
+        }
+
+        .time-display {
+            font-family: var(--font-mono);
+            font-size: 4rem;
+            color: #00e5ff; /* Cyan accent matching source */
+            font-weight: 300;
+            letter-spacing: -2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ms-display {
+            font-size: 2.5rem;
+            color: #00e5ff;
+        }
+
+        .copy-btn {
+            margin-top: 16px;
+            background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface);
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--md-sys-shape-corner-full);
+            font-weight: 600;
+            cursor: pointer;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        /* Controls Section */
+        .controls {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            background: var(--md-sys-color-surface);
+            border-top-left-radius: var(--md-sys-shape-corner-large);
+            border-top-right-radius: var(--md-sys-shape-corner-large);
+        }
+
+        .controls.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .btn {
+            background: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+            border: none;
+            padding: 24px 16px;
+            border-radius: var(--md-sys-shape-corner-large);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active { opacity: 0.8; }
+
+        .btn.primary {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-background);
+        }
+
+        .btn-subtext {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* Settings Toggle */
+        .settings-panel {
+            padding: 16px 24px;
+            background: var(--md-sys-color-background);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            accent-color: #00e5ff;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span>Talk! Stopwatch</span>
+        <span>⋮</span>
+    </header>
+
+    <div class="display-container">
+        <div class="time-display" id="timeDisplay">
+            00:00:00<span class="ms-display">.000</span>
+        </div>
+        <button class="copy-btn">COPY THE TIME</button>
+    </div>
+
+    <div class="settings-panel">
+        <div class="toggle-container">
+            <input type="checkbox" id="voiceToggle" checked>
+            <label for="voiceToggle">Voice Interval (10s)</label>
+        </div>
+        <span>MUTE</span>
+    </div>
+
+    <div class="controls three-col">
+        <button class="btn" id="btnReset">RESET</button>
+        <button class="btn" id="btn10Count">
+            10 COUNT
+            <span class="btn-subtext">START</span>
+        </button>
+        <button class="btn primary" id="btnStart">START</button>
+    </div>
+
+    <script>
+        /**
+         * Core Engine Architecture:
+         * 1. Inline Web Worker for uninterrupted background ticking.
+         * 2. Absolute time tracking via Date.now().
+         * 3. Utterance pre-instantiation ("caching") 2 seconds ahead of interval.
+         */
+
+        class StopwatchEngine {
+            constructor() {
+                this.display = document.getElementById('timeDisplay');
+                this.btnStart = document.getElementById('btnStart');
+                this.btnReset = document.getElementById('btnReset');
+                this.voiceToggle = document.getElementById('voiceToggle');
+
+                this.isRunning = false;
+                this.startTime = 0;
+                this.accumulatedTime = 0;
+                
+                this.ttsIntervalMs = 10000; // 10 seconds default
+                this.lastSpokenInterval = 0;
+                this.cachedUtterance = null;
+                this.nextSpeakTarget = this.ttsIntervalMs;
+
+                this.initWorker();
+                this.bindEvents();
+            }
+
+            initWorker() {
+                // Inline Web Worker prevents background throttling
+                const workerCode = `
+                    let timer;
+                    self.onmessage = function(e) {
+                        if (e.data === 'start') {
+                            timer = setInterval(() => self.postMessage('tick'), 50); // 50ms resolution
+                        } else if (e.data === 'stop') {
+                            clearInterval(timer);
+                        }
+                    };
+                `;
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                this.worker = new Worker(URL.createObjectURL(blob));
+                
+                this.worker.onmessage = () => this.tick();
+            }
+
+            bindEvents() {
+                this.btnStart.addEventListener('click', () => this.toggle());
+                this.btnReset.addEventListener('click', () => this.reset());
+            }
+
+            toggle() {
+                if (this.isRunning) {
+                    this.stop();
+                } else {
+                    this.start();
+                }
+            }
+
+            start() {
+                this.isRunning = true;
+                this.startTime = Date.now() - this.accumulatedTime;
+                this.btnStart.textContent = 'STOP';
+                this.worker.postMessage('start');
+                
+                // Initialize TTS engine silently to bypass gesture requirements on mobile
+                if ('speechSynthesis' in window) {
+                    let utterance = new SpeechSynthesisUtterance('');
+                    utterance.volume = 0;
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
+            stop() {
+                this.isRunning = false;
+                this.accumulatedTime = Date.now() - this.startTime;
+                this.btnStart.textContent = 'START';
+                this.worker.postMessage('stop');
+            }
+
+            reset() {
+                this.stop();
+                this.accumulatedTime = 0;
+                this.lastSpokenInterval = 0;
+                this.nextSpeakTarget = this.ttsIntervalMs;
+                this.cachedUtterance = null;
+                this.updateDisplay(0);
+            }
+
+            tick() {
+                const elapsed = Date.now() - this.startTime;
+                this.updateDisplay(elapsed);
+                this.handleVoiceLogic(elapsed);
+            }
+
+            updateDisplay(ms) {
+                // UI updates bound to requestAnimationFrame for smooth rendering
+                requestAnimationFrame(() => {
+                    const totalSeconds = Math.floor(ms / 1000);
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    const milliseconds = ms % 1000;
+
+                    const pad = (num, size) => num.toString().padStart(size, '0');
+                    
+                    this.display.innerHTML = 
+                        `${pad(hours, 2)}:${pad(minutes, 2)}:${pad(seconds, 2)}` +
+                        `<span class="ms-display">.${pad(milliseconds, 3)}</span>`;
+                });
+            }
+
+            handleVoiceLogic(elapsed) {
+                if (!this.voiceToggle.checked || !('speechSynthesis' in window)) return;
+
+                // 1. "Cache" generation 2 seconds prior to target
+                if (elapsed >= (this.nextSpeakTarget - 2000) && !this.cachedUtterance) {
+                    const secondsToSpeak = this.nextSpeakTarget / 1000;
+                    const text = `${secondsToSpeak} seconds`;
+                    
+                    this.cachedUtterance = new SpeechSynthesisUtterance(text);
+                    this.cachedUtterance.rate = 1.1; // Slightly faster for stopwatch pacing
+                    
+                    // Force native voice assignment explicitly
+                    const voices = window.speechSynthesis.getVoices();
+                    if (voices.length > 0) {
+                        this.cachedUtterance.voice = voices.find(v => v.lang.includes('en')) || voices[0];
+                    }
+                }
+
+                // 2. Dispatch exactly on boundary
+                if (elapsed >= this.nextSpeakTarget) {
+                    if (this.cachedUtterance) {
+                        window.speechSynthesis.speak(this.cachedUtterance);
+                    } else {
+                        // Fallback if caching was skipped (e.g., rapid tab un-suspend)
+                        const secondsToSpeak = this.nextSpeakTarget / 1000;
+                        window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${secondsToSpeak} seconds`));
+                    }
+                    
+                    // Reset cache and set next target
+                    this.cachedUtterance = null;
+                    this.lastSpokenInterval = this.nextSpeakTarget;
+                    this.nextSpeakTarget += this.ttsIntervalMs;
+                }
+            }
+        }
+
+        // Ensure voices are loaded (Chrome edge case)
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // Initialize App
+        const app = new StopwatchEngine();
+    </script>
+</body>
+</html>
