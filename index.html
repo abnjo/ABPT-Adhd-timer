@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Talk! Stopwatch Pro</title>
+    <meta name="theme-color" content="#1c1b1f">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <title>TTS STOPWATCH</title>
     <style>
         :root {
             --md-sys-color-background: #1c1b1f;
@@ -221,6 +225,7 @@
     </style>
 </head>
 <body>
+  
 
     <div class="modal-overlay" id="infoModal">
         <div class="modal-content">
@@ -792,5 +797,24 @@
 
         const app = new StopwatchEngine();
     </script>
+      
+      
+   <script>
+        // ... (Keep the existing StopwatchEngine class and instantiation) ...
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
+
 </html>
