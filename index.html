@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Talk! Stopwatch</title>
+    <title>Talk! Stopwatch Pro</title>
     <style>
         :root {
-            /* Material 3 Dark Theme Baseline */
+            /* Material 3 Dark Theme */
             --md-sys-color-background: #1c1b1f;
             --md-sys-color-on-background: #e6e1e5;
             --md-sys-color-surface: #2b2930;
@@ -17,22 +17,18 @@
             --md-sys-color-primary-container: #4f378b;
             --md-sys-color-secondary-container: #4a4458;
             --md-sys-color-on-secondary-container: #e8def8;
+            --md-sys-color-tertiary-container: #633b48;
             --md-sys-color-error: #f2b8b5;
             
             --md-sys-shape-corner-large: 28px;
             --md-sys-shape-corner-medium: 16px;
-            --md-sys-shape-corner-full: 9999px;
+            --md-sys-shape-corner-small: 8px;
 
             --font-mono: 'Roboto Mono', monospace, ui-monospace;
             --font-sans: 'Roboto', system-ui, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
         body {
             background-color: var(--md-sys-color-background);
@@ -41,187 +37,243 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Top App Bar */
-        header {
-            padding: 16px;
-            font-size: 20px;
-            font-weight: 500;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Display Area */
+        /* Displays */
         .display-container {
-            flex: 1;
+            padding: 24px 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding-top: 40px;
+            gap: 12px;
+            background: var(--md-sys-color-surface);
+            border-bottom-left-radius: var(--md-sys-shape-corner-large);
+            border-bottom-right-radius: var(--md-sys-shape-corner-large);
         }
 
+        .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+        
         .time-display {
             font-family: var(--font-mono);
-            font-size: 4rem;
-            color: #00e5ff; /* Cyan accent matching source */
-            font-weight: 300;
-            letter-spacing: -2px;
             font-variant-numeric: tabular-nums;
+            font-weight: 300;
         }
 
-        .ms-display {
-            font-size: 2.5rem;
-            color: #00e5ff;
+        .main-time { font-size: 3.5rem; color: #00e5ff; letter-spacing: -2px; }
+        .main-time .ms { font-size: 2rem; }
+        
+        .sub-displays {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            background: var(--md-sys-color-surface-variant);
+            padding: 12px;
+            border-radius: var(--md-sys-shape-corner-medium);
         }
 
-        .copy-btn {
-            margin-top: 16px;
+        .sub-time { font-size: 1.5rem; color: var(--md-sys-color-primary); }
+        .overtime { color: var(--md-sys-color-error); }
+
+        /* Configuration Panel */
+        .config-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        input[type="number"], input[type="text"] {
             background: var(--md-sys-color-surface-variant);
             color: var(--md-sys-color-on-surface);
-            border: none;
-            padding: 12px 24px;
-            border-radius: var(--md-sys-shape-corner-full);
-            font-weight: 600;
-            cursor: pointer;
-            width: 80%;
-            max-width: 300px;
+            border: 1px solid transparent;
+            padding: 12px;
+            border-radius: var(--md-sys-shape-corner-small);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            width: 100%;
+        }
+        
+        input[type="number"] { width: 80px; text-align: center; }
+
+        /* Adjuster Buttons */
+        .adjust-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
-        /* Controls Section */
+        .chip-btn {
+            background: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+            border: none;
+            padding: 8px 0;
+            border-radius: var(--md-sys-shape-corner-small);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* Quick Starts */
+        .quick-start-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .quick-btn {
+            background: var(--md-sys-color-tertiary-container);
+            color: var(--md-sys-color-on-surface);
+            border: none;
+            padding: 12px 0;
+            border-radius: var(--md-sys-shape-corner-medium);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Primary Controls */
         .controls {
-            padding: 24px;
+            padding: 16px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             background: var(--md-sys-color-surface);
-            border-top-left-radius: var(--md-sys-shape-corner-large);
-            border-top-right-radius: var(--md-sys-shape-corner-large);
-        }
-
-        .controls.three-col {
-            grid-template-columns: 1fr 1fr 1fr;
         }
 
         .btn {
-            background: var(--md-sys-color-secondary-container);
-            color: var(--md-sys-color-on-secondary-container);
+            padding: 20px;
             border: none;
-            padding: 24px 16px;
             border-radius: var(--md-sys-shape-corner-large);
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.2s;
         }
 
-        .btn:active { opacity: 0.8; }
-
-        .btn.primary {
-            background: var(--md-sys-color-primary-container);
-            color: var(--md-sys-color-on-background);
-        }
-
-        .btn-subtext {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            margin-top: 4px;
-        }
-
-        /* Settings Toggle */
-        .settings-panel {
-            padding: 16px 24px;
-            background: var(--md-sys-color-background);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-            accent-color: #00e5ff;
-        }
+        .btn-reset { background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); }
+        .btn-start { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-background); }
     </style>
 </head>
 <body>
 
-    <header>
-        <span>Talk! Stopwatch</span>
-        <span>⋮</span>
-    </header>
-
     <div class="display-container">
-        <div class="time-display" id="timeDisplay">
-            00:00:00<span class="ms-display">.000</span>
+        <div class="label">Elapsed Time</div>
+        <div class="time-display main-time" id="dispElapsed">
+            00:00:00<span class="ms">.00</span>
         </div>
-        <button class="copy-btn">COPY THE TIME</button>
+        
+        <div class="sub-displays">
+            <div>
+                <div class="label">Remaining (HH:MM:SS)</div>
+                <div class="time-display sub-time" id="dispRemHH">00:00:00.00</div>
+            </div>
+            <div>
+                <div class="label">Remaining (Sec)</div>
+                <div class="time-display sub-time" id="dispRemSS">0.00</div>
+            </div>
+        </div>
     </div>
 
-    <div class="settings-panel">
-        <div class="toggle-container">
-            <input type="checkbox" id="voiceToggle" checked>
-            <label for="voiceToggle">Voice Interval (10s)</label>
+    <div class="config-panel">
+        <div class="config-group">
+            <div class="label">Target End Time (Minutes)</div>
+            <div class="adjust-grid">
+                <button class="chip-btn" onclick="app.adjustTarget(-10)">-10m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(-5)">-5m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(-1)">-1m</button>
+                <input type="number" id="inTargetMins" value="5" min="0" step="0.5">
+                <button class="chip-btn" onclick="app.adjustTarget(1)">+1m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(5)">+5m</button>
+                <button class="chip-btn" onclick="app.adjustTarget(10)">+10m</button>
+            </div>
         </div>
-        <span>MUTE</span>
+
+        <div class="config-group">
+            <div class="label">Quick Start (Minutes)</div>
+            <div class="quick-start-grid">
+                <button class="quick-btn" onclick="app.quickStart(1)">1m</button>
+                <button class="quick-btn" onclick="app.quickStart(2)">2m</button>
+                <button class="quick-btn" onclick="app.quickStart(3)">3m</button>
+                <button class="quick-btn" onclick="app.quickStart(5)">5m</button>
+                <button class="quick-btn" onclick="app.quickStart(10)">10m</button>
+                <button class="quick-btn" onclick="app.quickStart(15)">15m</button>
+                <button class="quick-btn" onclick="app.quickStart(20)">20m</button>
+            </div>
+        </div>
+
+        <div class="config-group">
+            <div class="label">Voice Logic Parameters</div>
+            <div class="input-row">
+                <input type="number" id="inInterval" value="10" min="1"> 
+                <span>Interval (s)</span>
+            </div>
+            <div class="input-row">
+                <input type="number" id="inCountdown" value="5" min="1"> 
+                <span>Countdown triggers at (s) remaining</span>
+            </div>
+            <div class="input-row">
+                <input type="text" id="inOvertimeText" value="Time exceeded"> 
+                <span>Overtime Phrase</span>
+            </div>
+        </div>
     </div>
 
-    <div class="controls three-col">
-        <button class="btn" id="btnReset">RESET</button>
-        <button class="btn" id="btn10Count">
-            10 COUNT
-            <span class="btn-subtext">START</span>
-        </button>
-        <button class="btn primary" id="btnStart">START</button>
+    <div class="controls">
+        <button class="btn btn-reset" id="btnReset">RESET</button>
+        <button class="btn btn-start" id="btnStart">START</button>
     </div>
 
     <script>
-        /**
-         * Core Engine Architecture:
-         * 1. Inline Web Worker for uninterrupted background ticking.
-         * 2. Absolute time tracking via Date.now().
-         * 3. Utterance pre-instantiation ("caching") 2 seconds ahead of interval.
-         */
-
         class StopwatchEngine {
             constructor() {
-                this.display = document.getElementById('timeDisplay');
+                // DOM Binding
+                this.dElap = document.getElementById('dispElapsed');
+                this.dRemHH = document.getElementById('dispRemHH');
+                this.dRemSS = document.getElementById('dispRemSS');
                 this.btnStart = document.getElementById('btnStart');
-                this.btnReset = document.getElementById('btnReset');
-                this.voiceToggle = document.getElementById('voiceToggle');
+                this.inTargetMins = document.getElementById('inTargetMins');
+                this.inInterval = document.getElementById('inInterval');
+                this.inCountdown = document.getElementById('inCountdown');
+                this.inOvertimeText = document.getElementById('inOvertimeText');
 
+                // State
                 this.isRunning = false;
                 this.startTime = 0;
                 this.accumulatedTime = 0;
                 
-                this.ttsIntervalMs = 10000; // 10 seconds default
-                this.lastSpokenInterval = 0;
+                // Audio Scheduler State
+                this.nextEvent = null; // { timeMs, text }
                 this.cachedUtterance = null;
-                this.nextSpeakTarget = this.ttsIntervalMs;
+                this.overtimeRepetitionMs = 5000; // Repeat overtime phrase every 5s
 
                 this.initWorker();
-                this.bindEvents();
+                
+                document.getElementById('btnReset').addEventListener('click', () => this.reset());
+                this.btnStart.addEventListener('click', () => this.toggle());
+                
+                this.updateDisplays(0);
             }
 
             initWorker() {
-                // Inline Web Worker prevents background throttling
                 const workerCode = `
                     let timer;
                     self.onmessage = function(e) {
                         if (e.data === 'start') {
-                            timer = setInterval(() => self.postMessage('tick'), 50); // 50ms resolution
+                            timer = setInterval(() => self.postMessage('tick'), 50);
                         } else if (e.data === 'stop') {
                             clearInterval(timer);
                         }
@@ -229,35 +281,41 @@
                 `;
                 const blob = new Blob([workerCode], { type: 'application/javascript' });
                 this.worker = new Worker(URL.createObjectURL(blob));
-                
                 this.worker.onmessage = () => this.tick();
             }
 
-            bindEvents() {
-                this.btnStart.addEventListener('click', () => this.toggle());
-                this.btnReset.addEventListener('click', () => this.reset());
+            // --- UI Bindings ---
+            
+            adjustTarget(deltaMins) {
+                let current = parseFloat(this.inTargetMins.value) || 0;
+                let newVal = Math.max(0, current + deltaMins);
+                this.inTargetMins.value = newVal;
+                if(!this.isRunning) this.updateDisplays(this.accumulatedTime);
             }
 
-            toggle() {
-                if (this.isRunning) {
-                    this.stop();
-                } else {
-                    this.start();
-                }
+            quickStart(mins) {
+                this.inTargetMins.value = mins;
+                this.reset();
+                this.start();
             }
+
+            // --- Core Engine ---
+
+            toggle() { this.isRunning ? this.stop() : this.start(); }
 
             start() {
                 this.isRunning = true;
                 this.startTime = Date.now() - this.accumulatedTime;
                 this.btnStart.textContent = 'STOP';
-                this.worker.postMessage('start');
                 
-                // Initialize TTS engine silently to bypass gesture requirements on mobile
+                // Initialize TTS context on user gesture
                 if ('speechSynthesis' in window) {
-                    let utterance = new SpeechSynthesisUtterance('');
-                    utterance.volume = 0;
-                    window.speechSynthesis.speak(utterance);
+                    let u = new SpeechSynthesisUtterance('');
+                    u.volume = 0; window.speechSynthesis.speak(u);
                 }
+                
+                this.calculateNextSpeechEvent(this.accumulatedTime);
+                this.worker.postMessage('start');
             }
 
             stop() {
@@ -265,84 +323,140 @@
                 this.accumulatedTime = Date.now() - this.startTime;
                 this.btnStart.textContent = 'START';
                 this.worker.postMessage('stop');
+                if(window.speechSynthesis) window.speechSynthesis.cancel();
             }
 
             reset() {
                 this.stop();
                 this.accumulatedTime = 0;
-                this.lastSpokenInterval = 0;
-                this.nextSpeakTarget = this.ttsIntervalMs;
                 this.cachedUtterance = null;
-                this.updateDisplay(0);
+                this.nextEvent = null;
+                this.updateDisplays(0);
             }
 
             tick() {
                 const elapsed = Date.now() - this.startTime;
-                this.updateDisplay(elapsed);
+                this.updateDisplays(elapsed);
                 this.handleVoiceLogic(elapsed);
             }
 
-            updateDisplay(ms) {
-                // UI updates bound to requestAnimationFrame for smooth rendering
-                requestAnimationFrame(() => {
-                    const totalSeconds = Math.floor(ms / 1000);
-                    const hours = Math.floor(totalSeconds / 3600);
-                    const minutes = Math.floor((totalSeconds % 3600) / 60);
-                    const seconds = totalSeconds % 60;
-                    const milliseconds = ms % 1000;
+            // --- Deterministic Audio Scheduler ---
 
-                    const pad = (num, size) => num.toString().padStart(size, '0');
+            calculateNextSpeechEvent(elapsedMs) {
+                const targetMs = (parseFloat(this.inTargetMins.value) || 0) * 60000;
+                const intervalMs = (parseFloat(this.inInterval.value) || 10) * 1000;
+                const countdownZoneMs = (parseFloat(this.inCountdown.value) || 0) * 1000;
+                
+                // Phase 3: Overtime
+                if (elapsedMs >= targetMs) {
+                    const elapsedOvertime = elapsedMs - targetMs;
+                    const nextOvertimeTick = Math.ceil((elapsedOvertime + 1) / this.overtimeRepetitionMs) * this.overtimeRepetitionMs;
+                    this.nextEvent = {
+                        time: targetMs + nextOvertimeTick,
+                        text: this.inOvertimeText.value || "Time exceeded"
+                    };
+                    return;
+                }
+
+                // Phase 2: Final Countdown Zone
+                if (elapsedMs >= targetMs - countdownZoneMs) {
+                    const remainingMs = targetMs - elapsedMs;
+                    const nextSecondBoundaryMs = targetMs - (Math.floor((remainingMs - 1) / 1000) * 1000);
+                    const secondsLeft = Math.round((targetMs - nextSecondBoundaryMs) / 1000);
                     
-                    this.display.innerHTML = 
-                        `${pad(hours, 2)}:${pad(minutes, 2)}:${pad(seconds, 2)}` +
-                        `<span class="ms-display">.${pad(milliseconds, 3)}</span>`;
-                });
+                    this.nextEvent = {
+                        time: nextSecondBoundaryMs,
+                        text: secondsLeft.toString()
+                    };
+                    return;
+                }
+
+                // Phase 1: Standard Interval
+                const nextIntervalBoundary = Math.ceil((elapsedMs + 1) / intervalMs) * intervalMs;
+                
+                // Check if the next interval breaches the countdown zone
+                if (nextIntervalBoundary >= targetMs - countdownZoneMs) {
+                    // Recalculate to drop into Phase 2 directly
+                    this.calculateNextSpeechEvent(targetMs - countdownZoneMs);
+                } else {
+                    this.nextEvent = {
+                        time: nextIntervalBoundary,
+                        text: `${Math.round(nextIntervalBoundary / 1000)} seconds`
+                    };
+                }
             }
 
             handleVoiceLogic(elapsed) {
-                if (!this.voiceToggle.checked || !('speechSynthesis' in window)) return;
+                if (!this.nextEvent || !('speechSynthesis' in window)) return;
 
-                // 1. "Cache" generation 2 seconds prior to target
-                if (elapsed >= (this.nextSpeakTarget - 2000) && !this.cachedUtterance) {
-                    const secondsToSpeak = this.nextSpeakTarget / 1000;
-                    const text = `${secondsToSpeak} seconds`;
+                // 1. Predictive Caching (Pre-instantiate 2000ms before boundary)
+                if (elapsed >= (this.nextEvent.time - 2000) && !this.cachedUtterance) {
+                    this.cachedUtterance = new SpeechSynthesisUtterance(this.nextEvent.text);
+                    this.cachedUtterance.rate = 1.15; // Brisk pacing for stopwatch
                     
-                    this.cachedUtterance = new SpeechSynthesisUtterance(text);
-                    this.cachedUtterance.rate = 1.1; // Slightly faster for stopwatch pacing
-                    
-                    // Force native voice assignment explicitly
                     const voices = window.speechSynthesis.getVoices();
                     if (voices.length > 0) {
                         this.cachedUtterance.voice = voices.find(v => v.lang.includes('en')) || voices[0];
                     }
                 }
 
-                // 2. Dispatch exactly on boundary
-                if (elapsed >= this.nextSpeakTarget) {
+                // 2. Exact Boundary Dispatch
+                if (elapsed >= this.nextEvent.time) {
                     if (this.cachedUtterance) {
                         window.speechSynthesis.speak(this.cachedUtterance);
                     } else {
-                        // Fallback if caching was skipped (e.g., rapid tab un-suspend)
-                        const secondsToSpeak = this.nextSpeakTarget / 1000;
-                        window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${secondsToSpeak} seconds`));
+                        // Rapid state change fallback
+                        window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.nextEvent.text));
                     }
                     
-                    // Reset cache and set next target
                     this.cachedUtterance = null;
-                    this.lastSpokenInterval = this.nextSpeakTarget;
-                    this.nextSpeakTarget += this.ttsIntervalMs;
+                    // Compute next logical node based on current time
+                    this.calculateNextSpeechEvent(elapsed); 
                 }
+            }
+
+            // --- Display Formatting ---
+
+            updateDisplays(ms) {
+                requestAnimationFrame(() => {
+                    const targetMs = (parseFloat(this.inTargetMins.value) || 0) * 60000;
+                    const remMs = targetMs - ms;
+                    const isOver = remMs < 0;
+                    const absRemMs = Math.abs(remMs);
+
+                    // Helpers
+                    const pad2 = n => n.toString().padStart(2, '0');
+                    const formatHH = timeMs => {
+                        const s = Math.floor(timeMs / 1000);
+                        return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(s % 60)}`;
+                    };
+                    const formatSS = timeMs => (timeMs / 1000).toFixed(2);
+
+                    // 1. Main Elapsed
+                    const elapS = Math.floor(ms / 1000);
+                    this.dElap.innerHTML = `${formatHH(ms)}<span class="ms">.${pad2(Math.floor((ms % 1000)/10))}</span>`;
+
+                    // 2. Remaining HH:MM:SS.SS
+                    const prefix = isOver ? "+" : "-";
+                    this.dRemHH.textContent = `${prefix}${formatHH(absRemMs)}.${pad2(Math.floor((absRemMs % 1000)/10))}`;
+                    
+                    // 3. Remaining Sec.SS
+                    this.dRemSS.textContent = `${prefix}${formatSS(absRemMs)}`;
+
+                    // Styling for overtime
+                    if (isOver) {
+                        this.dRemHH.classList.add('overtime');
+                        this.dRemSS.classList.add('overtime');
+                    } else {
+                        this.dRemHH.classList.remove('overtime');
+                        this.dRemSS.classList.remove('overtime');
+                    }
+                });
             }
         }
 
-        // Ensure voices are loaded (Chrome edge case)
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
-        }
-
-        // Initialize App
+        // Init
+        if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
         const app = new StopwatchEngine();
     </script>
 </body>
