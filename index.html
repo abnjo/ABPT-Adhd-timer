@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Talk! Stopwatch Pro</title>
+    
     <meta name="theme-color" content="#1c1b1f">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <title>TTS STOPWATCH</title>
     <style>
         :root {
             --md-sys-color-background: #1c1b1f;
@@ -225,7 +226,6 @@
     </style>
 </head>
 <body>
-  
 
     <div class="modal-overlay" id="infoModal">
         <div class="modal-content">
@@ -303,6 +303,16 @@
                 </span>
                 <input type="text" id="inOvertimeText" value="Time exceeded" onchange="app.saveState()"> 
             </div>
+
+            <div class="input-row">
+                <span class="info-span">Interval Beeps (Fallback)
+                    <button class="info-btn" onclick="app.showInfo('Synthetic Oscillator Fallback', 'Generates an 880Hz sine wave (beep) precisely at the interval boundary. Acts as an acoustic accent and a guaranteed hardware fallback if the Android Binder unexpectedly drops the TTS IPC during deep sleep.')">i</button>
+                </span>
+                <label class="switch">
+                    <input type="checkbox" id="chkBeeps" checked onchange="app.saveState()">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
 
         <details class="advanced-panel">
@@ -359,6 +369,7 @@
     <script>
         class StopwatchEngine {
             constructor() {
+                // DOM bindings
                 this.dElap = document.getElementById('dispElapsed');
                 this.dRemHH = document.getElementById('dispRemHH');
                 this.dRemSS = document.getElementById('dispRemSS');
@@ -371,7 +382,9 @@
                 this.inInterval = document.getElementById('inInterval');
                 this.inCountdown = document.getElementById('inCountdown');
                 this.inOvertimeText = document.getElementById('inOvertimeText');
+                
                 this.chkDynamic = document.getElementById('chkDynamic');
+                this.chkBeeps = document.getElementById('chkBeeps');
                 
                 this.selAppendMode = document.getElementById('selAppendMode');
                 this.customAppendRow = document.getElementById('customAppendRow');
@@ -383,6 +396,7 @@
                 this.modalTitle = document.getElementById('modalTitle');
                 this.modalBody = document.getElementById('modalBody');
 
+                // System State
                 this.isRunning = false;
                 this.startTime = 0;
                 this.accumulatedTime = 0;
@@ -394,6 +408,13 @@
                 
                 this.latencyLUT = []; 
                 this.cachedVoices = [];
+                this.audioCtx = null;
+
+                // Silent Audio Initialization (OOM_adj elevation)
+                const silentMp3 = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gSWxhbSBNdWxhbW92//vQxAADEaD1wQkAAAA8AAAAA//uQZAUAB1WI0PZugAAAAAoQwAAAEk3nRdHqAAAAACiDgAAAAAAABCMyBQAAAAP///z1lZD///////z/8AA8AAAgAA///4A8D/w//4QA///D/wAA8AA/A==';
+                this.bgAudio = new Audio(silentMp3);
+                this.bgAudio.loop = true;
+                this.bgAudio.volume = 0.01;
 
                 this.loadState();
                 this.initWorker();
@@ -410,9 +431,10 @@
                 this.updateDisplays(0);
                 this.loadVoices();
                 this.updateCalibrationUI();
+                this.setupMediaSession();
             }
 
-            // --- OS Hooks ---
+            // --- OS API Hooks & Hardware Architectures ---
             async requestWakeLock() {
                 if ('wakeLock' in navigator) {
                     try { this.wakeLock = await navigator.wakeLock.request('screen'); } 
@@ -425,6 +447,40 @@
                     this.wakeLock.release();
                     this.wakeLock = null;
                 }
+            }
+
+            setupMediaSession() {
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: 'Talk! Stopwatch Active',
+                        artist: 'TTS Process Elevated',
+                        artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }]
+                    });
+
+                    navigator.mediaSession.setActionHandler('play', () => this.start());
+                    navigator.mediaSession.setActionHandler('pause', () => this.stop());
+                }
+            }
+
+            playSyntheticBeep() {
+                if (!this.audioCtx) return;
+                
+                const osc = this.audioCtx.createOscillator();
+                const gainNode = this.audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, this.audioCtx.currentTime); // 880Hz (A5)
+                
+                // ADSR Envelope to prevent zero-crossing clipping
+                gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.5, this.audioCtx.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.15);
+                
+                osc.connect(gainNode);
+                gainNode.connect(this.audioCtx.destination);
+                
+                osc.start(this.audioCtx.currentTime);
+                osc.stop(this.audioCtx.currentTime + 0.15);
             }
 
             // --- UI & State Management ---
@@ -451,6 +507,7 @@
                     countdown: this.inCountdown.value,
                     overtimeText: this.inOvertimeText.value,
                     dynamicEnabled: this.chkDynamic.checked,
+                    beepsEnabled: this.chkBeeps.checked,
                     latencyLUT: this.latencyLUT,
                     appendMode: this.selAppendMode.value,
                     customH: this.inCustomH.value,
@@ -472,11 +529,12 @@
                         this.inCountdown.value = state.countdown || '5';
                         this.inOvertimeText.value = state.overtimeText || 'Time exceeded';
                         this.chkDynamic.checked = state.dynamicEnabled !== false;
+                        this.chkBeeps.checked = state.beepsEnabled !== false;
                         this.latencyLUT = state.latencyLUT || [];
                         this.selAppendMode.value = state.appendMode || 'preset_default';
-                        this.inCustomH.value = state.customH || 'h';
-                        this.inCustomM.value = state.customM || 'm';
-                        this.inCustomS.value = state.customS || 's';
+                        this.inCustomH.value = state.customH || '';
+                        this.inCustomM.value = state.customM || '';
+                        this.inCustomS.value = state.customS || '';
                     } catch (e) {
                         console.error('State hydration failed:', e);
                     }
@@ -548,7 +606,6 @@
                 this.start();
             }
 
-            // --- Temporal Formatting Engine ---
             buildTemporalString(totalSeconds) {
                 if (totalSeconds === 0) return "0";
                 
@@ -573,10 +630,9 @@
                     lblM = this.inCustomM.value; 
                     lblS = this.inCustomS.value; 
                 }
-                else { lblH = "hours"; lblM = "minutes"; lblS = "seconds"; } // Default
+                else { lblH = "hours"; lblM = "minutes"; lblS = "seconds"; }
 
                 const formatLabel = (val, label) => {
-                    // Primitive morphological stripping for English singulars
                     if (val === 1 && label.length > 2 && label.endsWith('s')) return label.slice(0, -1);
                     return label;
                 };
@@ -608,7 +664,6 @@
                 this.btnCalibrate.disabled = true;
                 this.latencyLUT = []; 
                 
-                // Abstract mathematical domains for stratified testing
                 const testValues = [1, 10, 60, 120, 3600];
 
                 this.calibrationStatus.textContent = "Waking Daemon...";
@@ -616,7 +671,6 @@
                 
                 for (let i = 0; i < testValues.length; i++) {
                     const val = testValues[i];
-                    // Map the integer to the user's specific string configuration prior to profiling
                     const formattedString = this.buildTemporalString(val);
                     
                     this.calibrationStatus.textContent = `Profiling Point ${i+1}/${testValues.length} ("${formattedString}")...`;
@@ -668,6 +722,18 @@
                 
                 this.requestWakeLock();
                 
+                // Initialize/Resume Web Audio Context on user gesture
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+                
+                // Force Media playback for BG persistence
+                this.bgAudio.play().catch(e => console.warn('Background audio suppressed:', e));
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+                
                 if ('speechSynthesis' in window) {
                     let u = new SpeechSynthesisUtterance('');
                     u.volume = 0; window.speechSynthesis.speak(u);
@@ -684,8 +750,12 @@
                 this.btnStart.textContent = 'START';
                 
                 this.releaseWakeLock();
-                this.worker.postMessage('stop');
                 
+                // Suspend Media playback
+                this.bgAudio.pause();
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+
+                this.worker.postMessage('stop');
                 if(window.speechSynthesis) window.speechSynthesis.cancel();
             }
 
@@ -719,7 +789,6 @@
                     const remainingMs = targetMs - elapsedMs;
                     const nextSecondBoundaryMs = targetMs - (Math.floor((remainingMs - 1) / 1000) * 1000);
                     const secondsLeft = Math.round((targetMs - nextSecondBoundaryMs) / 1000);
-                    // Retain strictly raw numbers for final seconds to prevent speech collision overlaps
                     this.nextEvent = { time: nextSecondBoundaryMs, text: secondsLeft.toString(), val: secondsLeft };
                     return;
                 }
@@ -749,6 +818,7 @@
 
                 const dispatchTime = this.nextEvent.time - offsetMs;
 
+                // 1. Dispatch TTS early (Offset)
                 if (elapsed >= dispatchTime && !this.hasDispatchedCurrentEvent) {
                     let utterance = new SpeechSynthesisUtterance(this.nextEvent.text);
                     utterance.rate = 1.15;
@@ -758,7 +828,12 @@
                     this.hasDispatchedCurrentEvent = true;
                 }
 
+                // 2. Dispatch Mathematical Boundary triggers
                 if (elapsed >= this.nextEvent.time) {
+                    if (this.chkBeeps.checked) {
+                        this.playSyntheticBeep();
+                    }
+                    
                     this.hasDispatchedCurrentEvent = false;
                     this.calculateNextSpeechEvent(elapsed); 
                 }
@@ -796,25 +871,15 @@
         }
 
         const app = new StopwatchEngine();
-    </script>
-      
-      
-   <script>
-        // ... (Keep the existing StopwatchEngine class and instantiation) ...
 
-        // Service Worker Registration
+        // --- PWA Service Worker Registration ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('SW registered with scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('SW registration failed:', error);
-                    });
+                    .then(registration => console.log('SW active:', registration.scope))
+                    .catch(error => console.error('SW failed:', error));
             });
         }
     </script>
 </body>
-
 </html>
